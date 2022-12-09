@@ -1,19 +1,27 @@
 import { useEffect } from "react";
 import {useDispatch} from "react-redux";
-import {loadProvider, loadNetwork, loadAccount, loadToken} from "../store/interactions";
+import {loadProvider, loadNetwork, loadAccount, loadTokens, loadExchange} from "../store/interactions";
+import config from "../config.json";
 
 function App() {
     const dispatch = useDispatch()
 
     const loadBlockchainData = async () =>{
-        await loadAccount(dispatch)
 
         // connect ethers to blockchain
         const provider = loadProvider(dispatch)
         const chainId = await loadNetwork(provider, dispatch)
 
+        // fetch current network's chainId (e.g hardhat: 31337, kovan: 42)
+        await loadAccount(provider, dispatch)
+
         // token smart Contract
-        await loadToken(provider, chainId, dispatch)
+        const  dApp = config[chainId].dApp.address
+        const  mETH = config[chainId].mETH.address
+        await loadTokens(provider, [dApp,mETH], dispatch)
+
+        const  exchange = config[chainId].exchange.address
+        await loadExchange(provider, exchange, dispatch)
     }
 
     useEffect(()=>{
