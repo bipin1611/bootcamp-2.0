@@ -1,9 +1,17 @@
 import { useEffect } from "react";
 import {useDispatch} from "react-redux";
-import {loadProvider, loadNetwork, loadAccount, loadTokens, loadExchange} from "../store/interactions";
+import {
+    loadProvider,
+    loadNetwork,
+    loadAccount,
+    loadTokens,
+    loadExchange,
+    subscriberToEvents
+} from "../store/interactions";
 import config from "../config.json";
 import Navbar from "./Navbar";
 import Markets from "./Markets";
+import Balance from "./Balance";
 
 function App() {
     const dispatch = useDispatch()
@@ -31,8 +39,10 @@ function App() {
         const  mETH = config[chainId].mETH.address
         await loadTokens(provider, [dApp,mETH], dispatch)
 
-        const  exchange = config[chainId].exchange.address
-        await loadExchange(provider, exchange, dispatch)
+        const  exchangeConfig = config[chainId].exchange.address
+        const  exchange = await loadExchange(provider, exchangeConfig, dispatch)
+
+        subscriberToEvents(exchange, dispatch)
     }
 
     useEffect(()=>{
@@ -49,7 +59,7 @@ function App() {
 
                     <Markets />
 
-                    {/* Balance */}
+                    <Balance />
 
                     {/* Order */}
 
