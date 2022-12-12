@@ -1,6 +1,6 @@
-import { createSelector } from "reselect";
-import { get, groupBy, reject } from 'lodash'
-import { ethers } from "ethers";
+import {createSelector} from "reselect";
+import {get, groupBy, reject, minBy, maxBy} from 'lodash'
+import {ethers} from "ethers";
 import moment from "moment";
 
 const GREEN = '#25CE8F'
@@ -16,10 +16,10 @@ const decorateOrder = (order, tokens) => {
 
     // Note:DApp should be considered token0, mETH is considered token1
     // Example: Giving mETH in exchange for DApp
-    if(order.tokenGive === tokens[1].address){
+    if (order.tokenGive === tokens[1].address) {
         token0Amount = order.amountGive // amount of DApp we are giving
         token1Amount = order.amountGet // amount of mETH we want...
-    }else{
+    } else {
         token0Amount = order.amountGet // amount of DApp we want
         token1Amount = order.amountGive // amount of mETH we are giving
     }
@@ -38,14 +38,14 @@ const decorateOrder = (order, tokens) => {
     })
 }
 
-const openOrders = (state) =>{
+const openOrders = (state) => {
 
     const all = allOrders(state)
     const cancelled = cancelledOrders(state)
     const filled = filledOrders(state)
 
 
-    const openOrders = reject(all, (order) =>{
+    const openOrders = reject(all, (order) => {
         const orderFilled = filled.some((o) => o.id.toString() === order.id.toString())
         const orderCancelled = cancelled.some((o) => o.id.toString() === order.id.toString())
 
@@ -57,57 +57,138 @@ const openOrders = (state) =>{
 }
 
 // Order BOOK
-export const orderBookSelector = createSelector(openOrders, tokens, (orders, tokens) =>{
+export const orderBookSelector = createSelector(
+    openOrders,
+    tokens,
+    (orders, tokens) => {
 
-    if(!tokens[0] && !tokens[1]){ return }
+        if (!tokens[0] || !tokens[1]) {
+            return;
+        }
 
-    // filter orders by selected tokens
-    orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-    orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+        // filter orders by selected tokens
+        orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
+        orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
 
 
-    // decorate orders
-    orders = decorateOrderBookOrders(orders, tokens)
+        // decorate orders
+        orders = decorateOrderBookOrders(orders, tokens)
 
-    // group order
-    orders = groupBy(orders, 'orderType')
+        // group order
+        orders = groupBy(orders, 'orderType')
 
-    // sort buy orders by tokens price
-    const buyOrders = get(orders, 'buy', [])
-    orders ={
-        ...orders,
-        buyOrders: buyOrders.sort((a,b) => b.tokenPrice - a.tokenPrice)
+        // sort buy orders by tokens price
+        const buyOrders = get(orders, 'buy', [])
+        orders = {
+            ...orders,
+            buyOrders: buyOrders.sort((a, b) => b.tokenPrice - a.tokenPrice)
+        }
+
+
+        // sort sell orders by tokens price
+        const sellOrders = get(orders, 'sell', [])
+        orders = {
+            ...orders,
+            sellOrders: sellOrders.sort((a, b) => b.tokenPrice - a.tokenPrice)
+        }
+
+        return orders;
     }
+)
 
+const decorateOrderBookOrders = (orders, tokens) => {
 
-    // sort sell orders by tokens price
-    const sellOrders = get(orders, 'sell', [])
-    orders ={
-        ...orders,
-        sellOrders: sellOrders.sort((a,b) => b.tokenPrice - a.tokenPrice)
-    }
-
-    return orders;
-})
-
-const decorateOrderBookOrders = (orders, tokens) =>{
-
-    return(
-        orders.map((order) =>{
+    return (
+        orders.map((order) => {
             order = decorateOrder(order, tokens)
             order = decorateOrderBookOrder(order, tokens)
 
-            return(order)
+            return (order)
         })
     )
 }
-const decorateOrderBookOrder = (order, tokens) =>{
+const decorateOrderBookOrder = (order, tokens) => {
     const orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell'
 
-    return({
+    return ({
         ...order,
         orderType,
         orderTypeClass: (orderType === 'buy' ? GREEN : RED),
         orderFillAction: (orderType === 'buy' ? 'sell' : 'buy'),
     })
+}
+
+
+//////////////////////////////////////////////
+// Price Cart
+
+export const priceChartSelector = createSelector(
+    filledOrders,
+    tokens,
+    (orders, tokens) => {
+        if (!tokens[0] || !tokens[1]) {
+            return;
+        }
+
+
+        // filter orders by selected tokens
+        orders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
+        orders = orders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+
+
+        // Sort orders by date ascending to compare history
+        orders = orders.sort((a, b) => a.timestamp - b.timestamp)
+
+        // decorate orders
+        orders = decorateOrderBookOrders(orders, tokens)
+
+
+        let secondLastOrder, lastOrder
+         [secondLastOrder, lastOrder] = orders.slice(orders.length - 2, orders.length)
+
+        const lastPrice = get(lastOrder, 'tokenPrice', 0)
+
+
+        const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0)
+
+        const series = {
+            lastPrice,
+            lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-'),
+            series: [{
+                data: buildGraphData(orders)
+
+            }]
+        }
+
+        return (series);
+
+
+    }
+)
+
+const buildGraphData = (orders) => {
+    // group order
+    orders = groupBy(orders, (o) => moment.unix(o.timestamp).startOf('hour').format())
+
+    const hours = Object.keys(orders)
+
+    let data = hours.map((hour) => {
+
+        // fetch all orders form current hrs
+        const group = orders[hours]
+
+        // calculate prices open, high low, close
+        const open = group[0]
+        const high = maxBy(group, 'tokenPrice')
+        const low = minBy(group, 'tokenPrice')
+        const close = group[group.length - 1]
+
+
+        return ({
+            x: new Date(hour),
+            y: [open.tokenPrice, high.tokenPrice, low.tokenPrice, close.tokenPrice]
+        })
+    })
+
+    return data;
 }
