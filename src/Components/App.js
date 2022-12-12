@@ -6,13 +6,14 @@ import {
     loadAccount,
     loadTokens,
     loadExchange,
-    subscriberToEvents
+    subscriberToEvents, loadAllOrders
 } from "../store/interactions";
 import config from "../config.json";
 import Navbar from "./Navbar";
 import Markets from "./Markets";
 import Balance from "./Balance";
 import Order from "./Order";
+import OrderBook from "./OrderBook";
 
 function App() {
     const dispatch = useDispatch()
@@ -44,6 +45,8 @@ function App() {
         const  exchange = await loadExchange(provider, exchangeConfig, dispatch)
 
         subscriberToEvents(exchange, dispatch)
+
+        loadAllOrders(provider, exchange, dispatch)
     }
 
     useEffect(()=>{
@@ -73,7 +76,7 @@ function App() {
 
                     {/* Trades */}
 
-                    {/* OrderBook */}
+                    <OrderBook />
 
                 </section>
             </main>
