@@ -187,6 +187,101 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
                 transferInProgress: false,
             }
 
+        ////////////////////////////
+        // cancelling order
+        case 'CANCEL_ORDER_REQUEST':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Cancel',
+                    isPending: true,
+                    isSuccessful: false,
+                },
+            }
+
+        case 'CANCEL_ORDER_FAIL':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Cancel',
+                    isPending: false,
+                    isSuccessful: false,
+                    isError: true,
+
+                },
+            }
+
+        case 'CANCEL_ORDER_SUCCESS':
+            return {
+                ...state,
+                cancelledOrders: {
+                    ...state.cancelledOrders,
+                    data: [
+                        ...state.cancelledOrders.data,
+                        action.order
+                    ]
+                },
+                transaction: {
+                    transactionType: 'Cancel',
+                    isPending: false,
+                    isSuccessful: true,
+                    isError: false,
+                },
+                events: [action.event, ...state.events]
+            }
+
+
+        //---------------------------------
+        // FIll order
+        case 'FILL_ORDER_REQUEST':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Fill Order',
+                    isPending: true,
+                    isSuccessful: false,
+                },
+            }
+
+        case 'FILL_ORDER_FAIL':
+            return {
+                ...state,
+                transaction: {
+                    transactionType: 'Fill Order',
+                    isPending: false,
+                    isSuccessful: false,
+                    isError: true,
+
+                },
+            }
+
+        case 'FILL_ORDER_SUCCESS':
+            // prevent duplicate orders
+            index = state.filledOrders.data.findIndex(order => order.id.toString() === action.order.id.toString())
+
+            if (index === -1) {
+                data = [...state.filledOrders.data, action.order]
+            } else {
+                data = state.filledOrders.data
+            }
+
+            return {
+                ...state,
+                filledOrders: {
+                    ...state.filledOrders,
+                    data
+                },
+                transaction: {
+                    transactionType: 'Fill Order',
+                    isPending: false,
+                    isSuccessful: true,
+                    isError: false,
+                },
+                events: [action.event, ...state.events]
+            }
+
+        //////////////////////////////////////////////////
+
         case 'NEW_ORDER_REQUEST':
             return {
                 ...state,
@@ -213,7 +308,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
 
         case 'NEW_ORDER_SUCCESS':
             // prevent duplicate orders
-            index = state.allOrders.data.findIndex(order => order.id === action.orderId)
+            index = state.allOrders.data.findIndex(order => order.id.toString() === action.order.id.toString())
 
 
             if (index === -1) {

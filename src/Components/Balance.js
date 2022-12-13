@@ -12,7 +12,7 @@ const Balance = () => {
     const [isDeposit, setIsDeposit] = useState(true)
 
     const amountHandler = (e, token) => {
-        if (token.address == tokens[0].address) {
+        if (token.address === tokens[0].address) {
             setToken1TransferAmount(e.target.value)
         }else{
             setToken2TransferAmount(e.target.value)
@@ -40,7 +40,7 @@ const Balance = () => {
 
     const depositHandler = (e, token) => {
         e.preventDefault()
-        if (token.address == tokens[0].address) {
+        if (token.address === tokens[0].address) {
 
             transferTokens(provider, exchange, 'Deposit', token, token1TransferAmount, dispatch)
 
@@ -54,7 +54,7 @@ const Balance = () => {
 
     const withdrawHandler = (e, token) => {
         e.preventDefault()
-        if (token.address == tokens[0].address) {
+        if (token.address === tokens[0].address) {
 
             transferTokens(provider, exchange, 'Withdraw', token, token1TransferAmount, dispatch)
 
@@ -71,7 +71,7 @@ const Balance = () => {
 
     const tabHandler = (e) =>{
 
-        if(e.target.className != depositRef.current.className){
+        if(e.target.className !== depositRef.current.className){
             e.target.className = 'tab tab--active';
             depositRef.current.className = 'tab';
 
@@ -89,7 +89,7 @@ const Balance = () => {
         if (exchange && tokens[0] && tokens[1] && account) {
             loadBalances(exchange, tokens, account, dispatch)
         }
-    }, [exchange, tokens, account, transferInProgress])
+    }, [exchange, tokens, account, transferInProgress, dispatch])
 
     return (
         <div className='component exchange__transfers'>
@@ -141,7 +141,8 @@ const Balance = () => {
                 </div>
 
                 <form onSubmit={isDeposit ? (e) => depositHandler(e, tokens[1]) : (e) => withdrawHandler(e, tokens[1])}>
-                    <label htmlFor="token1"></label>
+                    <label htmlFor="token1">{symbols && symbols[1]} Amount</label>
+
                     <input type="text"
                            id='token1'
                            placeholder='0.0000'
