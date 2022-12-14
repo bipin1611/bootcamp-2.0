@@ -55,7 +55,9 @@ small {
 small {
   color: var(--clr-neutral);
 }
-
+.text--sm{
+  font-size: 12px;
+}
 /* ------------------------------------------------------ */
 /* -- Display -- */
 

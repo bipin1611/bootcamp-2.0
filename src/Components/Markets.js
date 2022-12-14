@@ -16,7 +16,7 @@ const Markets = () => {
 
     return (
         <div className='component exchange__markets'>
-            <p>*Created by Bipin Parmar by following DApp University's Bootcamp2.0 course</p>
+            <p className='text--sm'>*Created by Bipin Parmar by following DApp University's Bootcamp2.0 course</p>
 
             <div className='component__header'>
                 <h2>Select market</h2>
