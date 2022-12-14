@@ -28,12 +28,12 @@ const Navbar = () => {
     return (
         <div className='exchange__header grid'>
             <div className='exchange__header--brand flex'>
-                <img src={logo} className="logo" alt="DApp Logo" />
-                <h1>DApp Token Exchange</h1>
+                <img src={logo} className="logo" alt="Bootcamp2.0 Logo" />
+                <h1>Bootcamp2.0</h1>
             </div>
 
             <div className='exchange__header--networks flex'>
-                <img src={eth} className="Eth logo" alt="DApp Logo" />
+                <img src={eth} className="Eth logo" alt="Bootcamp2.0 Logo" />
 
                 {chainId && (
                     <select name="networks" id="networks" value={config[chainId] ? `0x${chainId.toString(16)}` : `0`} onChange={networkHandler}>
@@ -47,7 +47,7 @@ const Navbar = () => {
                             Goerli
                         </option>
                         <option value="0x13881">
-                            Mumbai
+                            Goerli
                         </option>
                     </select>
                 )}
