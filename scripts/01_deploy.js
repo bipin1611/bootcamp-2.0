@@ -13,8 +13,9 @@ async function main() {
 
   const accounts = await hre.ethers.getSigners()
   console.log(
-    `Accounts fetched:\n ${accounts[0].address}\n ${accounts[1].address}\n ${accounts[2].address}`
+    `Accounts fetched:\n ${accounts[0].address}\n ${accounts[1].address}`
   );
+
 
   // Deploy token contracts
   const dapp = await Token.deploy('Bipin Parmar', "BIPS");
