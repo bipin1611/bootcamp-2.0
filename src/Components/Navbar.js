@@ -46,6 +46,9 @@ const Navbar = () => {
                         <option value="0x5">
                             Goerli
                         </option>
+                        <option value="0x13881">
+                            Mumbai
+                        </option>
                     </select>
                 )}
 
